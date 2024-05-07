@@ -1,0 +1,16 @@
+default:
+  MYSQL_CONFIG:
+    HOST: "127.0.0.1"
+    PORT: 3306
+    USER: "root"
+    PASSWORD: "123456"
+
+  WEB_SERVICE_CONFIG:
+    HOST: "127.0.0.1"
+    PORT: 8000
+
+  LOG_CONFIG:
+    LOG_LEVEL: "INFO"
+    USE_JSON: false
+
+  ENV: "development"

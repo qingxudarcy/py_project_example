@@ -11,9 +11,7 @@ from .config.service_config import Config, MysqlConfig
 
 class MysqlClient:
     def __init__(self, config: Config):
-        self.engine = self._create_engine(
-            config.MYSQL_CONFIG, echo=config.IS_DEVELOPMENT
-        )
+        self.engine = self._create_engine(config.MYSQL_CONFIG, echo=config.IS_DEV)
 
     def _create_engine(self, config: MysqlConfig, echo: bool = False) -> AsyncEngine:
         return create_async_engine(

@@ -38,7 +38,8 @@ class Config:
             os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         )
     )
-    IS_DEVELOPMENT: bool = os.getenv("ENV", "development") == "development"
+    ENV: str = Field(default="development")
+    IS_DEV: bool = ENV == "development"
 
 
 @autoparams()
