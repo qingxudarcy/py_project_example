@@ -9,20 +9,20 @@ from loguru import logger
 
 
 class WebServiceConfig(BaseModel):
-    HOST: str = os.getenv("WEB_HOST", "127.0.0.1")
-    PORT: int = os.getenv("WEB_PORT", 8000)
+    HOST: str
+    PORT: int
 
 
 class MysqlConfig(BaseModel):
     HOST: str
-    PORT: int = os.getenv("MYSQL_PORT", 3306)
+    PORT: int
     USER: str
     PASSWORD: str
 
 
 class LogConfig(BaseModel):
-    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
-    USE_JSON: bool = os.getenv("LOG_USE_JSON", False)
+    LOG_LEVEL: str
+    USE_JSON: bool
 
 
 @dataclass
@@ -48,7 +48,10 @@ def bind_config() -> Config:
         config_path, os.getenv("config_file", "setting.yaml")
     )
     settings = Dynaconf(
-        settings_files=[config_file_path], load_dotenv=True, environments=True
+        settings_files=[config_file_path],
+        load_dotenv=True,
+        environments=True,
+        envvar_prefix=False,
     )
 
     config_dict: Dict[str, Tuple[str, Union[str, Any]]] = {
