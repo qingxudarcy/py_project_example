@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "web-app"
+version = "0.1.0"
+description = ""
+authors = ["darcy.chang <18279777936@163.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = "^0.110.2"
+inject = "^5.2.1"
+uvicorn = "^0.29.0"
+loguru = "^0.7.2"
+dynaconf = "^3.2.5"
+sentence-transformers = "^2.7.0"
+orjson = "^3.10.1"
+sqlalchemy = "^2.0.29"
+aiomysql = "^0.2.0"
+
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.7.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

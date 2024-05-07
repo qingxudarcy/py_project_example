@@ -1,0 +1,9 @@
+.history
+__pycache__
+.vscode
+.mypy_cache
+htmlcov
+.pytest_cache
+
+# macOS
+.DS_Store

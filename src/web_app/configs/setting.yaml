@@ -1,0 +1,6 @@
+default:
+
+  MYSQL_CONFIG:
+    HOST: '@format {env[MYSQL_HOST]}'
+    USER: '@format {env[MYSQL_USER]}'
+    PASSWORD: '@format {env[MYSQL_PASSWORD]}'
