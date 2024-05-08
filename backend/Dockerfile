@@ -3,6 +3,19 @@ FROM python:3.11.0-slim
 ARG PIP_VERSION="24.0"
 ARG POETRY_VERSION="1.8.1"
 
+# Install basic and additional apt dependencies
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && apt-get autoremove -yqq --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Poetry
+RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/opt/poetry python && \
+    cd /usr/local/bin && \
+    ln -s /opt/poetry/bin/poetry && \
+    poetry config virtualenvs.create false
+
 # Add User
 ARG WEB_USER_GID="900"
 ARG WEB_USER_UID="900"
@@ -21,6 +34,6 @@ USER ${WEB_USER_UID}
 
 COPY --chown=web:web ./web_app /app
 
-RUN pip install poetry==${POETRY_VERSION} && poetry install --no-root
+RUN poetry install --no-root --only main
 
 CMD ["poetry", "run", "python", "main.py"]

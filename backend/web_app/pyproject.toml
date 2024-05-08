@@ -7,20 +7,15 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-fastapi = "^0.110.2"
+fastapi = "^0.111.0"
 inject = "^5.2.1"
 uvicorn = "^0.29.0"
 loguru = "^0.7.2"
 dynaconf = "^3.2.5"
-sentence-transformers = "^2.7.0"
-orjson = "^3.10.1"
+orjson = "^3.10.3"
 aiomysql = "^0.2.0"
 sqlmodel = "^0.0.18"
-greenlet = "^3.0.3"
 
-
-[tool.poetry.group.dev.dependencies]
-pre-commit = "^3.7.0"
 
 [build-system]
 requires = ["poetry-core"]
