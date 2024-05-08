@@ -18,6 +18,8 @@ class MysqlConfig(BaseModel):
     PORT: int
     USER: str
     PASSWORD: str
+    POOL_SIZE: int
+    MAX_OVERFLOW: int
 
 
 class LogConfig(BaseModel):
@@ -39,7 +41,10 @@ class Config:
         )
     )
     ENV: str = Field(default="development")
-    IS_DEV: bool = ENV == "development"
+
+    @property
+    def is_dev(self) -> bool:
+        return self.ENV == "development"
 
 
 @autoparams()
