@@ -1,7 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel
 
-from model.mysql.user import UserModel
+from model.user import UserModel
 
 
 class ModifyUser(BaseModel):

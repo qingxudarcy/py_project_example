@@ -7,7 +7,7 @@ from fastapi import APIRouter, Query, HTTPException
 from core.schema.user import User, ModifyUser
 from core.depend.api import page_depend
 from core.depend.db import mysql_session_depend, user_from_path_id_depend
-from model.mysql.user import UserModel
+from model.user import UserModel
 
 user_api_router: APIRouter = APIRouter(prefix="/user", tags=["User"])
 

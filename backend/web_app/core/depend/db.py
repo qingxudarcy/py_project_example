@@ -8,7 +8,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from dependencies.mysql import MysqlClient
-from model.mysql.user import UserModel
+from model.user import UserModel
 
 
 mysql_client: MysqlClient = inject.instance(MysqlClient)
