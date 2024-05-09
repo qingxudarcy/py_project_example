@@ -1,16 +1,21 @@
 from typing import List, Optional
 
-from sqlmodel import Field, SQLModel, Relationship
+from sqlmodel import Field, SQLModel, Relationship, Column, JSON, String
 
 
-class User(SQLModel, table=True):
+class UserBase(SQLModel):
+    name: str = Field(sa_column=Column(String(length=50)))
+    email: str = Field(sa_column=Column(String(length=50), unique=True))
+    status: bool
+    password: str = Field(sa_column=Column(String(length=20)))
+    role_id: int
+
+
+class User(UserBase, table=True):
     __tablename__ = "user"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    name: str = Field(le=50)
-    email: str = Field(le=50, unique=True)
-    password: str = Field(le=50)
-    status: bool
+    password: str = Field(sa_column=Column(String(length=50)))
 
     role_id: int = Field(foreign_key="user_role.id")
     role: Optional["UserRole"] = Relationship(
@@ -20,14 +25,27 @@ class User(SQLModel, table=True):
     def __repr__(self):
         return f"UserModel(id={self.id!r}, name={self.name!r}, email={self.email!r}, status={self.status!r}, role={self.role.name!r})"
 
-    def serialize(self):
-        return UserPublic(
-            id=self.id,
-            name=self.name,
-            email=self.email,
-            role_name=self.role.name,
-            status=self.status,
+
+class UserPublic(SQLModel):
+    id: int
+    name: str = Field(sa_column=Column(String(length=50)))
+    email: str = Field(sa_column=Column(String(length=50), unique=True))
+    status: bool
+    role_name: str
+
+    @classmethod
+    def serialize(cls, user: User):
+        return cls(
+            id=user.id,
+            name=user.name,
+            email=user.email,
+            role_name=user.role.name,
+            status=user.status,
         )
+
+
+class ModifyUser(UserBase):
+    password: Optional[str] = None
 
 
 class UserRolePermission(SQLModel, table=True):
@@ -37,12 +55,15 @@ class UserRolePermission(SQLModel, table=True):
     permission_id: int = Field(foreign_key="user_permission.id", primary_key=True)
 
 
-class UserRole(SQLModel, table=True):
+class UserRoleBase(SQLModel):
+    name: str = Field(sa_column=Column(String(length=50), unique=True))
+    status: bool
+
+
+class UserRole(UserRoleBase, table=True):
     __tablename__ = "user_role"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    name: str = Field(ge=50, unique=True)
-    status: bool
 
     users: List["User"] = Relationship(back_populates="role")
     permissions: List["Permission"] = Relationship(
@@ -52,39 +73,57 @@ class UserRole(SQLModel, table=True):
     )
 
     def __repr__(self) -> str:
-        return f"UserRoleModel(id={self.id!r}, name={self.name!r}, status={self.status!r},)"
+        return (
+            f"UserRoleModel(id={self.id!r}, name={self.name!r}, status={self.status!r})"
+        )
 
 
-class Permission(SQLModel, table=True):
+class ModifyRole(SQLModel):
+    status: bool
+
+
+class UserRolePublic(UserRoleBase):
+    id: int
+
+    @classmethod
+    def serialize(cls, role: UserRole):
+        return cls(id=role.id, name=role.name, status=role.status)
+
+
+class PermissionBase(SQLModel):
+    name: str = Field(sa_column=Column(String(length=50), unique=True))
+    api_path_regulars: List[str] = Field(sa_column=Column(JSON))
+    status: bool = Field(nullable=False)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+class Permission(PermissionBase, table=True):
     __tablename__ = "user_permission"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    name: str = Field(le=50, unique=True)
-    status: bool
 
     roles: List[UserRole] = Relationship(
         back_populates="permissions", link_model=UserRolePermission
     )
 
     def __repr__(self) -> str:
-        return f"PermissionModel(id={self.id!r}, name={self.name!r}, status={self.status!r},)"
+        return f"PermissionModel(id={self.id!r}, name={self.name!r}, status={self.status!r})"
 
 
-class ModifyUser(SQLModel):
-    name: str
-    email: str
-    password: Optional[str] = None
-    role_id: int
-    status: bool
-
-
-class UserPublic(SQLModel):
+class PermissionPublic(PermissionBase):
     id: int
-    name: str
-    email: str
-    role_name: str
-    status: bool
+
+    @classmethod
+    def serialize(cls, permission: Permission):
+        return cls(
+            id=permission.id,
+            name=permission.name,
+            api_path_regulars=permission.api_path_regulars,
+            status=permission.status,
+        )
 
 
-class ModifyRole(SQLModel):
+class ModifyPermission(SQLModel):
     status: bool

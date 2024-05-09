@@ -6,7 +6,7 @@ from fastapi import Depends
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from dependencies.mysql import MysqlClient
-from model.user import User, UserRole
+from model.user import User, UserRole, Permission
 
 
 mysql_client: MysqlClient = inject.instance(MysqlClient)
@@ -38,3 +38,15 @@ async def get_role_from_path_id(
 
 
 role_from_path_id_depend = Annotated[Optional[UserRole], Depends(get_role_from_path_id)]
+
+
+async def get_permission_from_path_id(
+    permission_id: int, session: mysql_session_depend
+) -> Optional[Permission]:
+    permission = await session.get(Permission, permission_id)
+    return permission
+
+
+permission_from_path_id_depend = Annotated[
+    Optional[Permission], Depends(get_permission_from_path_id)
+]
