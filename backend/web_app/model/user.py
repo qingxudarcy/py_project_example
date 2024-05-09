@@ -4,10 +4,14 @@ from sqlmodel import Field, SQLModel, Relationship, Column, JSON, String
 
 
 class UserBase(SQLModel):
-    name: str = Field(sa_column=Column(String(length=50), nullable=False))
-    email: str = Field(sa_column=Column(String(length=50), nullable=False, unique=True))
+    name: str = Field(
+        max_length=50, sa_column=Column(String(length=50), nullable=False)
+    )
+    email: str = Field(
+        max_length=50, sa_column=Column(String(length=50), nullable=False, unique=True)
+    )
     status: bool
-    password: str = Field(sa_column=Column(String(length=20), nullable=False))
+    password: str = Field(max_length=20)
     role_id: int
 
 
@@ -15,7 +19,9 @@ class User(UserBase, table=True):
     __tablename__ = "user"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    password: str = Field(sa_column=Column(String(length=50), nullable=False))
+    password: str = Field(
+        max_length=50, sa_column=Column(String(length=50), nullable=False)
+    )
 
     role_id: int = Field(foreign_key="user_role.id")
     role: Optional["UserRole"] = Relationship(
@@ -56,7 +62,9 @@ class UserRolePermission(SQLModel, table=True):
 
 
 class UserRoleBase(SQLModel):
-    name: str = Field(sa_column=Column(String(length=50), nullable=False, unique=True))
+    name: str = Field(
+        max_length=50, sa_column=Column(String(length=50), nullable=False, unique=True)
+    )
     status: bool
 
 
@@ -91,7 +99,9 @@ class UserRolePublic(UserRoleBase):
 
 
 class PermissionBase(SQLModel):
-    name: str = Field(sa_column=Column(String(length=50), nullable=False, unique=True))
+    name: str = Field(
+        max_length=50, sa_column=Column(String(length=50), nullable=False, unique=True)
+    )
     api_path_regulars: List[str] = Field(sa_column=Column(JSON, nullable=False))
     status: bool = Field(nullable=False)
 
