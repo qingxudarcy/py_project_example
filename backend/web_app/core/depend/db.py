@@ -3,12 +3,10 @@ from typing_extensions import Annotated
 
 import inject
 from fastapi import Depends
-from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from dependencies.mysql import MysqlClient
-from model.user import UserModel
+from model.user import User, UserRole
 
 
 mysql_client: MysqlClient = inject.instance(MysqlClient)
@@ -24,16 +22,19 @@ mysql_session_depend = Annotated[AsyncSession, Depends(get_async_session)]
 
 async def get_user_from_path_id(
     user_id: int, session: mysql_session_depend
-) -> Optional[UserModel]:
-    stmt = (
-        select(UserModel)
-        .where(UserModel.id == user_id)
-        .options(selectinload(UserModel.role))
-    )
-    user = await session.exec(stmt)
-    return user.first()
+) -> Optional[User]:
+    user = await session.get(User, user_id)
+    return user
 
 
-user_from_path_id_depend = Annotated[
-    Optional[UserModel], Depends(get_user_from_path_id)
-]
+user_from_path_id_depend = Annotated[Optional[User], Depends(get_user_from_path_id)]
+
+
+async def get_role_from_path_id(
+    role_id: int, session: mysql_session_depend
+) -> Optional[UserRole]:
+    role = await session.get(UserRole, role_id)
+    return role
+
+
+role_from_path_id_depend = Annotated[Optional[UserRole], Depends(get_role_from_path_id)]
