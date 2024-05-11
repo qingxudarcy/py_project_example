@@ -5,9 +5,9 @@ from api.routes.role import role_api_router
 from api.routes.permission import permission_api_router
 
 v1_routers = [
-    user_api_router,
-    role_api_router,
     permission_api_router,
+    role_api_router,
+    user_api_router,
 ]
 
 

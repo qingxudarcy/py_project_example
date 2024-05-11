@@ -29,7 +29,7 @@ class User(UserBase, table=True):
     )
 
     def __repr__(self):
-        return f"UserModel(id={self.id!r}, name={self.name!r}, email={self.email!r}, status={self.status!r}, role={self.role.name!r})"
+        return f"UserModel(id={self.id!r}, name={self.name!r}, email={self.email!r}, status={self.status!r})"
 
 
 class UserPublic(SQLModel):
@@ -88,14 +88,25 @@ class UserRole(UserRoleBase, table=True):
 
 class ModifyRole(SQLModel):
     status: bool
+    permission_ids: List[int]
+
+
+class CreateUserRole(UserRoleBase):
+    permission_ids: List[int]
 
 
 class UserRolePublic(UserRoleBase):
     id: int
+    permission_names: List[str]
 
     @classmethod
     def serialize(cls, role: UserRole):
-        return cls(id=role.id, name=role.name, status=role.status)
+        return cls(
+            id=role.id,
+            name=role.name,
+            status=role.status,
+            permission_names=[permission.name for permission in role.permissions],
+        )
 
 
 class PermissionBase(SQLModel):

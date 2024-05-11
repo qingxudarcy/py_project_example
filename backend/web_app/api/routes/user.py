@@ -44,8 +44,7 @@ async def create_user(user: UserBase, session: mysql_session_depend) -> UserPubl
     )
     session.add(new_user)
     await session.commit()
-    results = await session.exec(select(User).where(User.id == new_user.id))
-    new_user = results.first()
+    await session.refresh(new_user)
 
     return UserPublic.serialize(new_user)
 

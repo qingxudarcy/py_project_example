@@ -5,9 +5,9 @@ from sqlmodel import select, col
 
 from core.depend.api import page_depend
 from core.depend.db import mysql_session_depend, role_from_path_id_depend
-from model.user import UserRole, UserRoleBase, UserRolePublic, ModifyRole
+from model.user import UserRole, UserRolePublic, ModifyRole, CreateUserRole, Permission
 
-role_api_router: APIRouter = APIRouter(prefix="/role", tags=["UserRole"])
+role_api_router: APIRouter = APIRouter(prefix="/user_role", tags=["UserRole"])
 
 
 @role_api_router.get("")
@@ -34,12 +34,17 @@ async def role_detail(role: role_from_path_id_depend) -> UserRolePublic:
 
 @role_api_router.post("")
 async def create_role(
-    role: UserRoleBase, session: mysql_session_depend
+    role: CreateUserRole, session: mysql_session_depend
 ) -> UserRolePublic:
+    results = await session.exec(
+        select(Permission).where(Permission.id.in_(role.permission_ids))
+    )
+    permissions = results.all()
+
     new_role = UserRole(**role.model_dump())
+    new_role.permissions.extend(permissions)
     session.add(new_role)
     await session.commit()
-    new_role = await session.get(UserRole, new_role.id)
 
     return UserRolePublic.serialize(new_role)
 
@@ -52,7 +57,16 @@ async def update_role(
 ) -> UserRolePublic:
     if not role:
         raise HTTPException(status_code=404, detail="User role not found")
+
+    results = await session.exec(
+        select(Permission).where(Permission.id.in_(modifyRole.permission_ids))
+    )
+    permissions = results.all()
+
     role.status = modifyRole.status
+    role.permissions.clear()
+    role.permissions.extend(permissions)
+
     await session.commit()
 
     return UserRolePublic.serialize(role)

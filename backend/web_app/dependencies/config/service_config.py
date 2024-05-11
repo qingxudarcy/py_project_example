@@ -9,8 +9,8 @@ from loguru import logger
 
 
 class WebServiceConfig(BaseModel):
-    HOST: str
-    PORT: int
+    HOST: str = "127.0.0.1"
+    PORT: int = 8000
 
 
 class MysqlConfig(BaseModel):

@@ -7,7 +7,7 @@ from core.depend.api import page_depend
 from core.depend.db import mysql_session_depend, permission_from_path_id_depend
 from model.user import Permission, ModifyPermission, PermissionPublic, PermissionBase
 
-permission_api_router = APIRouter(prefix="/permission", tags=["RolePermission"])
+permission_api_router = APIRouter(prefix="/user_permission", tags=["RolePermission"])
 
 
 @permission_api_router.get("")
@@ -41,7 +41,6 @@ async def create_permission(
     new_permission = Permission(**permission.model_dump())
     session.add(new_permission)
     await session.commit()
-    new_permission = await session.get(Permission, new_permission.id)
 
     return PermissionPublic.serialize(new_permission)
 

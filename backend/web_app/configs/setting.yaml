@@ -7,10 +7,6 @@ default:
     POOL_SIZE: 50
     MAX_OVERFLOW: 10
 
-  WEB_SERVICE_CONFIG:
-    HOST: "127.0.0.1"
-    PORT: 8000
-
   LOG_CONFIG:
     LOG_LEVEL: "INFO"
     USE_JSON: false
