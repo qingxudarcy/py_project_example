@@ -10,7 +10,7 @@ from core.depend.db import (
     get_current_user_depend,
 )
 from model.user import User, UserPublic, UserBase, ModifyUser
-from common.authenticate import get_password_hash
+from core.authenticate import get_password_hash
 
 
 user_api_router: APIRouter = APIRouter(

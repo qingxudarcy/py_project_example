@@ -5,7 +5,7 @@ import inject
 from fastapi import Query, Depends
 
 from dependencies.config.service_config import Config
-from common.authenticate import get_current_user
+from core.authenticate import get_current_user
 from model.user import User
 
 config: Config = inject.instance(Config)

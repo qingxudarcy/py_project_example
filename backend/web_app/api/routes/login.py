@@ -9,7 +9,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from core.depend.db import mysql_session_depend, get_current_user_depend
 from model.jwt_token import JWTToken, Token
 from model.user import User
-from common.authenticate import authenticate_user, create_access_token
+from core.authenticate import authenticate_user, create_access_token
 from dependencies.config.service_config import Config
 
 config: Config = inject.instance(Config)
