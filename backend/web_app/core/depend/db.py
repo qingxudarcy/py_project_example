@@ -7,7 +7,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from dependencies.mysql import MysqlClient
 from model.user import User, UserRole, Permission
-from core.authenticate import get_current_user
+from core.oauth.authenticate import get_current_user
 
 
 mysql_client: MysqlClient = inject.instance(MysqlClient)
