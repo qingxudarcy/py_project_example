@@ -1,14 +1,21 @@
-import hashlib
 from typing import List, Union
 
 from sqlmodel import select, col
 from fastapi import APIRouter, Query, HTTPException
 
 from core.depend.api import page_depend
-from core.depend.db import mysql_session_depend, user_from_path_id_depend
+from core.depend.db import (
+    mysql_session_depend,
+    user_from_path_id_depend,
+    get_current_user_depend,
+)
 from model.user import User, UserPublic, UserBase, ModifyUser
+from common.authenticate import get_password_hash
 
-user_api_router: APIRouter = APIRouter(prefix="/user", tags=["User"])
+
+user_api_router: APIRouter = APIRouter(
+    prefix="/user", tags=["User"], dependencies=[get_current_user_depend]
+)
 
 
 @user_api_router.get("")
@@ -38,7 +45,7 @@ async def create_user(user: UserBase, session: mysql_session_depend) -> UserPubl
     new_user = User(
         name=user.name,
         email=user.email,
-        password=hashlib.md5(user.password.encode()).hexdigest(),
+        password=get_password_hash(user.password),
         role_id=user.role_id,
         status=user.status,
     )
@@ -63,7 +70,7 @@ async def update_user(
     user.role_id = modifyUser.role_id
     user.status = modifyUser.status
     modifyUser.password and setattr(
-        user, "password", hashlib.md5(modifyUser.password.encode()).hexdigest()
+        user, "password", get_password_hash(modifyUser.password)
     )
     await session.commit()
 

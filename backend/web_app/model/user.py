@@ -1,6 +1,8 @@
+import re
 from typing import List, Optional
 
-from sqlmodel import Field, SQLModel, Relationship, Column, JSON, String
+from sqlalchemy.dialects.mysql import INTEGER
+from sqlmodel import Field, SQLModel, Relationship, Column, JSON, String, ForeignKey
 
 
 class UserBase(SQLModel):
@@ -18,12 +20,16 @@ class UserBase(SQLModel):
 class User(UserBase, table=True):
     __tablename__ = "user"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: Optional[int] = Field(
+        default=None, sa_column=Column(INTEGER(unsigned=True), primary_key=True)
+    )
     password: str = Field(
-        max_length=50, sa_column=Column(String(length=50), nullable=False)
+        max_length=100, sa_column=Column(String(length=100), nullable=False)
     )
 
-    role_id: int = Field(foreign_key="user_role.id")
+    role_id: int = Field(
+        sa_column=Column(INTEGER(unsigned=True), ForeignKey("user_role.id"))
+    )
     role: Optional["UserRole"] = Relationship(
         back_populates="users", sa_relationship_kwargs={"lazy": "selectin"}
     )
@@ -57,8 +63,15 @@ class ModifyUser(UserBase):
 class UserRolePermission(SQLModel, table=True):
     __tablename__ = "user_role_permission"
 
-    role_id: int = Field(foreign_key="user_role.id", primary_key=True)
-    permission_id: int = Field(foreign_key="user_permission.id", primary_key=True)
+    id: Optional[int] = Field(
+        default=None, sa_column=Column(INTEGER(unsigned=True), primary_key=True)
+    )
+    role_id: int = Field(
+        sa_column=Column(INTEGER(unsigned=True), ForeignKey("user_role.id"))
+    )
+    permission_id: int = Field(
+        sa_column=Column(INTEGER(unsigned=True), ForeignKey("user_permission.id"))
+    )
 
 
 class UserRoleBase(SQLModel):
@@ -71,7 +84,9 @@ class UserRoleBase(SQLModel):
 class UserRole(UserRoleBase, table=True):
     __tablename__ = "user_role"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: Optional[int] = Field(
+        default=None, sa_column=Column(INTEGER(unsigned=True), primary_key=True)
+    )
 
     users: List["User"] = Relationship(back_populates="role")
     permissions: List["Permission"] = Relationship(
@@ -119,11 +134,23 @@ class PermissionBase(SQLModel):
     class Config:
         arbitrary_types_allowed = True
 
+    def match_api_path(self, path: str) -> bool:
+        for reg in self.api_path_regulars:
+            if "{id}" in reg:
+                reg = reg.replace("{id}", r"\d+")
+            result = re.match(reg, path)
+            if result:
+                break
+
+        return bool(result)
+
 
 class Permission(PermissionBase, table=True):
     __tablename__ = "user_permission"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: Optional[int] = Field(
+        default=None, sa_column=Column(INTEGER(unsigned=True), primary_key=True)
+    )
 
     roles: List[UserRole] = Relationship(
         back_populates="permissions", link_model=UserRolePermission

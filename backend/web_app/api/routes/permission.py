@@ -4,10 +4,18 @@ from fastapi import APIRouter, Query, HTTPException
 from sqlmodel import select, col
 
 from core.depend.api import page_depend
-from core.depend.db import mysql_session_depend, permission_from_path_id_depend
+from core.depend.db import (
+    mysql_session_depend,
+    permission_from_path_id_depend,
+    get_current_user_depend,
+)
 from model.user import Permission, ModifyPermission, PermissionPublic, PermissionBase
 
-permission_api_router = APIRouter(prefix="/user_permission", tags=["RolePermission"])
+permission_api_router = APIRouter(
+    prefix="/user_permission",
+    tags=["RolePermission"],
+    dependencies=[get_current_user_depend],
+)
 
 
 @permission_api_router.get("")

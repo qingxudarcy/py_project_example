@@ -7,6 +7,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from dependencies.mysql import MysqlClient
 from model.user import User, UserRole, Permission
+from common.authenticate import get_current_user
 
 
 mysql_client: MysqlClient = inject.instance(MysqlClient)
@@ -50,3 +51,5 @@ async def get_permission_from_path_id(
 permission_from_path_id_depend = Annotated[
     Optional[Permission], Depends(get_permission_from_path_id)
 ]
+
+get_current_user_depend = Depends(get_current_user)

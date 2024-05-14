@@ -20,3 +20,16 @@ class ServiceErrorResponse(BaseModel):
 
 class NotFoundErrorResponse(BaseModel):
     detail: str = Field(..., description="Not Found")
+
+
+class UnAuthorizedErrorResponse(BaseModel):
+    detail: str = Field(
+        default="Could not validate credentials", description="Unauthorized"
+    )
+
+
+class PermissionErrorResponse(BaseModel):
+    detail: str = Field(
+        default="You do not have permission to access this resource",
+        description="Permission Denied",
+    )

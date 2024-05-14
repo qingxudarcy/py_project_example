@@ -27,6 +27,12 @@ class LogConfig(BaseModel):
     USE_JSON: bool
 
 
+class JWTConfig(BaseModel):
+    SECRET_KEY: str = "28832edbba5b1e05eaf7483f3c79f5ce30bd8b04659433b4be45ec1860bc8cce"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+
+
 @dataclass
 class Config:
     LOG_CONFIG: LogConfig = Field(default_factory=lambda: LogConfig())
@@ -34,6 +40,7 @@ class Config:
         default_factory=lambda: WebServiceConfig()
     )
     MYSQL_CONFIG: MysqlConfig = Field(default_factory=lambda: MysqlConfig())
+    JWT_CONFIG: JWTConfig = Field(default_factory=lambda: JWTConfig())
 
     PROJECT_PATH: str = Field(
         default=os.path.dirname(

@@ -12,6 +12,8 @@ from core.schema.response import (
     ValidationErrorResponse,
     ServiceErrorResponse,
     NotFoundErrorResponse,
+    UnAuthorizedErrorResponse,
+    PermissionErrorResponse,
 )
 
 config: Config = inject.instance(Config)
@@ -24,6 +26,15 @@ class Server:
             exception_handlers={RequestValidationError: validation_exception_handler},
             default_response_class=ORJSONResponse,
             responses={
+                401: {
+                    "description": "Unauthorized",
+                    "model": UnAuthorizedErrorResponse,
+                },
+                403: {
+                    "description": "Permission Denied",
+                    "model": PermissionErrorResponse,
+                },
+                404: {"description": "Not found", "model": NotFoundErrorResponse},
                 422: {
                     "description": "Validation Error",
                     "model": ValidationErrorResponse,
@@ -32,7 +43,6 @@ class Server:
                     "description": "Internal Server Error",
                     "model": ServiceErrorResponse,
                 },
-                404: {"description": "User not found", "model": NotFoundErrorResponse},
             },
         )
 
@@ -49,4 +59,7 @@ class Server:
         )
 
 
-Server().run()
+web_app = Server().app
+
+if __name__ == "__main__":
+    Server().run()

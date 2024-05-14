@@ -1,7 +1,14 @@
-from typing import Dict
+from typing import Dict, Optional
 from typing_extensions import Annotated
 
+import inject
 from fastapi import Query, Depends
+
+from dependencies.config.service_config import Config
+from common.authenticate import get_current_user
+from model.user import User
+
+config: Config = inject.instance(Config)
 
 
 async def common_paging(
@@ -12,3 +19,5 @@ async def common_paging(
 
 
 page_depend = Annotated[dict, Depends(common_paging)]
+
+current_user_depend = Annotated[Optional[User], Depends(get_current_user)]
