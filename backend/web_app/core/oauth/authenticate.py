@@ -72,7 +72,7 @@ async def get_current_user(
     if user is None:
         raise credentials_exception
 
-    if not verify_user_has_permission(user, request.url.path):
+    if not verify_user_has_permission(user, request.url.path, request.method):
         raise permission_exception
 
     return user
@@ -103,12 +103,12 @@ def verify_token(token: str):
     return True, email
 
 
-def verify_user_has_permission(user: User, url: str) -> bool:
+def verify_user_has_permission(user: User, url: str, method: str) -> bool:
     permission: Permission
     role: UserRole = user.role
 
     for permission in role.permissions:
-        if permission.match_api_path(url):
+        if permission.match_api_path(url, method):
             return True
 
     return False

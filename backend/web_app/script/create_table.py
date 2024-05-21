@@ -9,7 +9,6 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from passlib.context import CryptContext
 
 from model.user import Permission, User, UserRole
-from model.jwt_token import *  # noqa F403
 
 HOST = "127.0.0.1"
 PORT = 3306
@@ -42,28 +41,74 @@ except Exception as e:
 async def init_data():
     _ = Permission(
         name="user_management",
-        api_path_regulars=["^/api/v1/user$", "^/api/v1/user/{id}$"],
+        api_path_regular=["^/api/v1/user$", "^/api/v1/user/{id}$"],
         status=True,
     )
 
     admin_permission = Permission(
         name="admin_permission",
-        api_path_regulars=[".*"],
+        api_path_regular=[".*"],
+        api_http_method="all",
         status=True,
     )
-    admin_role = UserRole(name="admin", status=True, permissions=[admin_permission])
+    admin_role = UserRole(name="Admin", status=True, permissions=[admin_permission])
+    super_admin_user = User(
+        name="super_admin",
+        email="superAdmin@mail.com",
+        password=pwd_context.hash("123456"),
+        role=admin_role,
+        status=True,
+        is_super_admin=True,
+    )
     admin_user = User(
         name="admin",
         email="admin@mail.com",
         password=pwd_context.hash("123456"),
         role=admin_role,
         status=True,
+        is_super_admin=False,
+    )
+
+    teacher_list_permission = Permission(
+        name="teacher_list_permission",
+        api_path_regular=["^/api/v1/teacher$"],
+        api_http_method="get",
+        status=True,
+    )
+    teacher_detail_permission = Permission(
+        name="teacher_detail_permission",
+        api_path_regular=["^/api/v1/teacher/{id}$"],
+        api_http_method="get",
+        status=True,
+    )
+
+    teacher_role = UserRole(
+        name="Teacher",
+        status=True,
+        permissions=[
+            teacher_detail_permission,
+        ],
+    )
+    head_teacher_role = UserRole(
+        name="HeadTeacher",
+        status=True,
+        permissions=[
+            teacher_list_permission,
+            teacher_detail_permission,
+        ],
     )
 
     async with AsyncSession(engine, expire_on_commit=False) as session:
         session.add(admin_permission)
         session.add(admin_role)
+        session.add(super_admin_user)
         session.add(admin_user)
+
+        session.add(teacher_list_permission)
+        session.add(teacher_detail_permission)
+
+        session.add(teacher_role)
+        session.add(head_teacher_role)
         await session.commit()
 
 

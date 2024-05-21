@@ -2,7 +2,16 @@ import re
 from typing import List, Optional
 
 from sqlalchemy.dialects.mysql import INTEGER
-from sqlmodel import Field, SQLModel, Relationship, Column, JSON, String, ForeignKey
+from sqlmodel import (
+    Field,
+    SQLModel,
+    Relationship,
+    Column,
+    UniqueConstraint,
+    String,
+    ForeignKey,
+    Boolean,
+)
 
 
 class UserBase(SQLModel):
@@ -25,6 +34,9 @@ class User(UserBase, table=True):
     )
     password: str = Field(
         max_length=100, sa_column=Column(String(length=100), nullable=False)
+    )
+    is_super_admin: bool = Field(
+        sa_column=Column(Boolean, nullable=False, default=False)
     )
 
     role_id: int = Field(
@@ -101,48 +113,30 @@ class UserRole(UserRoleBase, table=True):
         )
 
 
-class ModifyRole(SQLModel):
-    status: bool
-    permission_ids: List[int]
-
-
-class CreateUserRole(UserRoleBase):
-    permission_ids: List[int]
-
-
-class UserRolePublic(UserRoleBase):
-    id: int
-    permission_names: List[str]
-
-    @classmethod
-    def serialize(cls, role: UserRole):
-        return cls(
-            id=role.id,
-            name=role.name,
-            status=role.status,
-            permission_names=[permission.name for permission in role.permissions],
-        )
-
-
 class PermissionBase(SQLModel):
     name: str = Field(
         max_length=50, sa_column=Column(String(length=50), nullable=False, unique=True)
     )
-    api_path_regulars: List[str] = Field(sa_column=Column(JSON, nullable=False))
+    api_path_regular: str = Field(
+        max_length=50, sa_column=Column(String(length=50), nullable=False)
+    )
+    api_http_method: str = Field(
+        max_length=20, sa_column=Column(String(length=20), nullable=False)
+    )
     status: bool = Field(nullable=False)
 
     class Config:
         arbitrary_types_allowed = True
 
-    def match_api_path(self, path: str) -> bool:
+    def match_api_path(self, path: str, method: str) -> bool:
         for reg in self.api_path_regulars:
             if "{id}" in reg:
                 reg = reg.replace("{id}", r"\d+")
             result = re.match(reg, path)
-            if result:
-                break
+            if result and self.api_http_method.lower() in ["all", method.lower()]:
+                return True
 
-        return bool(result)
+        return False
 
 
 class Permission(PermissionBase, table=True):
@@ -156,22 +150,13 @@ class Permission(PermissionBase, table=True):
         back_populates="permissions", link_model=UserRolePermission
     )
 
+    __table_args__ = (
+        UniqueConstraint(
+            "api_path_regular",
+            "api_http_method",
+            name="api_path_regular__api_http_method_uniq_index",
+        ),
+    )
+
     def __repr__(self) -> str:
         return f"PermissionModel(id={self.id!r}, name={self.name!r}, status={self.status!r})"
-
-
-class PermissionPublic(PermissionBase):
-    id: int
-
-    @classmethod
-    def serialize(cls, permission: Permission):
-        return cls(
-            id=permission.id,
-            name=permission.name,
-            api_path_regulars=permission.api_path_regulars,
-            status=permission.status,
-        )
-
-
-class ModifyPermission(SQLModel):
-    status: bool

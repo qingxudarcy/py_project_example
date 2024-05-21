@@ -24,7 +24,7 @@ async def user_list(
     session: mysql_session_depend,
     query: Union[str, None] = Query(default=None, max_length=50),
 ) -> List[UserPublic]:
-    stmt = select(User)
+    stmt = select(User).where(User.is_super_admin == False)  # noqa E712
     if query:
         or_conditions = [
             col(User.name).contains(query),
@@ -70,6 +70,9 @@ async def update_user(
 ) -> UserPublic:
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    if user.is_super_admin:
+        raise HTTPException(status_code=403, detail="Super admin can't be modified")
 
     user.name = modifyUser.name
     user.email = modifyUser.email
