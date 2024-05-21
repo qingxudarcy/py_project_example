@@ -17,7 +17,7 @@ from core.exception import credentials_exception, permission_exception
 
 config: Config = inject.instance(Config)
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

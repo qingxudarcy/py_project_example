@@ -1,6 +1,6 @@
 from typing import List, Union
 
-from sqlmodel import select, col
+from sqlmodel import select, col, or_
 from fastapi import APIRouter, Query, HTTPException
 
 from core.depend.api import page_depend
@@ -22,12 +22,18 @@ user_api_router: APIRouter = APIRouter(
 async def user_list(
     page_dict: page_depend,
     session: mysql_session_depend,
-    name: Union[str, None] = Query(default=None, max_length=50),
+    query: Union[str, None] = Query(default=None, max_length=50),
 ) -> List[UserPublic]:
     stmt = select(User)
-    stmt = stmt.where(col(User.name).contains(name)) if name else stmt
+    if query:
+        or_conditions = [
+            col(User.name).contains(query),
+            col(User.email).contains(query),
+        ]
+        if query.isdigit():
+            or_conditions.append(col(User.id).contains(int(query)))
+        stmt = stmt.where(or_(*or_conditions))
     stmt = stmt.offset(page_dict["offset"]).limit(page_dict["limit"])
-
     users = await session.exec(stmt)
     return [UserPublic.serialize(user) for user in users.all()]
 

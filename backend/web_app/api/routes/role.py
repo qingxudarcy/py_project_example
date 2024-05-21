@@ -1,7 +1,7 @@
 from typing import Union, List
 
 from fastapi import APIRouter, Query, HTTPException
-from sqlmodel import select, col
+from sqlmodel import select, col, or_
 
 from core.depend.api import page_depend
 from core.depend.db import (
@@ -21,10 +21,14 @@ role_api_router: APIRouter = APIRouter(
 async def role_list(
     page_dict: page_depend,
     session: mysql_session_depend,
-    name: Union[str, None] = Query(default=None, max_length=50),
+    query: Union[str, None] = Query(default=None, max_length=50),
 ) -> List[UserRolePublic]:
     stmt = select(UserRole)
-    stmt = stmt.where(col(UserRole.name).contains(name)) if name else stmt
+    if query:
+        or_conditions = [col(UserRole.name).contains(query)]
+        if query.isdigit():
+            or_conditions.append(col(UserRole.id).contains(int(query)))
+        stmt = stmt.where(or_(*or_conditions))
     stmt = stmt.offset(page_dict["offset"]).limit(page_dict["limit"])
 
     roles = await session.exec(stmt)
