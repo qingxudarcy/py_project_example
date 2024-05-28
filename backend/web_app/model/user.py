@@ -1,10 +1,11 @@
 import re
 from typing import List, Optional
 
+import inject
 from sqlalchemy.dialects.mysql import INTEGER
+from pydantic import validator
 from sqlmodel import (
     Field,
-    SQLModel,
     Relationship,
     Column,
     UniqueConstraint,
@@ -12,6 +13,12 @@ from sqlmodel import (
     ForeignKey,
     Boolean,
 )
+
+from core.async_validator import async_validator
+from dependencies.mysql import MysqlClient
+from core.sqlmodel import SQLModel
+
+mysql_client: MysqlClient = inject.instance(MysqlClient)
 
 
 class UserBase(SQLModel):
@@ -24,6 +31,27 @@ class UserBase(SQLModel):
     status: bool
     password: str = Field(max_length=20)
     role_id: int
+
+    @validator("email")
+    def check_email(cls, email):
+        pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+        if re.match(pattern, email) is None:
+            raise ValueError("email is not valid")
+        return email
+
+    @validator("role_id")
+    def check_role_id(cls, v):
+        if v <= 0:
+            raise ValueError("role_id must be greater than 0")
+        return v
+
+    @async_validator("role_id")
+    async def check_role_id_exist(self, role_id):
+        async with mysql_client.get_async_session() as session:
+            role = await session.get(UserRole, role_id)
+            if not role:
+                raise ValueError("role_id not exist")
+            return role_id
 
 
 class User(UserBase, table=True):
@@ -72,8 +100,8 @@ class ModifyUser(UserBase):
     password: Optional[str] = None
 
 
-class UserRolePermission(SQLModel, table=True):
-    __tablename__ = "user_role_permission"
+class UserRolePermissionRelationship(SQLModel, table=True):
+    __tablename__ = "user_role_permission_relationship"
 
     id: Optional[int] = Field(
         default=None, sa_column=Column(INTEGER(unsigned=True), primary_key=True)
@@ -103,7 +131,7 @@ class UserRole(UserRoleBase, table=True):
     users: List["User"] = Relationship(back_populates="role")
     permissions: List["Permission"] = Relationship(
         back_populates="roles",
-        link_model=UserRolePermission,
+        link_model=UserRolePermissionRelationship,
         sa_relationship_kwargs={"lazy": "selectin"},
     )
 
@@ -129,12 +157,12 @@ class PermissionBase(SQLModel):
         arbitrary_types_allowed = True
 
     def match_api_path(self, path: str, method: str) -> bool:
-        for reg in self.api_path_regulars:
-            if "{id}" in reg:
-                reg = reg.replace("{id}", r"\d+")
-            result = re.match(reg, path)
-            if result and self.api_http_method.lower() in ["all", method.lower()]:
-                return True
+        reg = self.api_path_regular
+        if "{id}" in reg:
+            reg = reg.replace("{id}", r"\d+")
+        result = re.match(reg, path)
+        if result and self.api_http_method.lower() in ["all", method.lower()]:
+            return True
 
         return False
 
@@ -147,7 +175,7 @@ class Permission(PermissionBase, table=True):
     )
 
     roles: List[UserRole] = Relationship(
-        back_populates="permissions", link_model=UserRolePermission
+        back_populates="permissions", link_model=UserRolePermissionRelationship
     )
 
     __table_args__ = (

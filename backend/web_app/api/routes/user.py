@@ -1,4 +1,5 @@
-from typing import List, Union
+from typing import List, Union, Optional
+from typing_extensions import Annotated
 
 from sqlmodel import select, col, or_
 from fastapi import APIRouter, Query, HTTPException
@@ -9,7 +10,11 @@ from core.depend.db import (
     user_from_path_id_depend,
     get_current_user_depend,
 )
-from model.user import User, UserPublic, UserBase, ModifyUser
+from core.depend.validator.user_validator import (
+    user_base_depend,
+    modify_user_depend,
+)
+from model.user import User, UserPublic
 from core.oauth.authenticate import get_password_hash
 
 
@@ -23,8 +28,11 @@ async def user_list(
     page_dict: page_depend,
     session: mysql_session_depend,
     query: Union[str, None] = Query(default=None, max_length=50),
+    current_user: Annotated[Optional[User], get_current_user_depend] = None,
 ) -> List[UserPublic]:
-    stmt = select(User).where(User.is_super_admin == False)  # noqa E712
+    stmt = select(User).where(
+        col(User.is_super_admin).in_([False, current_user.is_super_admin])
+    )
     if query:
         or_conditions = [
             col(User.name).contains(query),
@@ -47,7 +55,9 @@ async def user_detail(user: user_from_path_id_depend) -> UserPublic:
 
 
 @user_api_router.post("")
-async def create_user(user: UserBase, session: mysql_session_depend) -> UserPublic:
+async def create_user(
+    user: user_base_depend, session: mysql_session_depend
+) -> UserPublic:
     new_user = User(
         name=user.name,
         email=user.email,
@@ -65,7 +75,7 @@ async def create_user(user: UserBase, session: mysql_session_depend) -> UserPubl
 @user_api_router.put("/{user_id}")
 async def update_user(
     user: user_from_path_id_depend,
-    modifyUser: ModifyUser,
+    modifyUser: modify_user_depend,
     session: mysql_session_depend,
 ) -> UserPublic:
     if not user:

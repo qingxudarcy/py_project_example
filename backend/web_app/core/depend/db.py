@@ -4,9 +4,11 @@ from typing_extensions import Annotated
 import inject
 from fastapi import Depends
 from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlmodel import select
 
 from dependencies.mysql import MysqlClient
 from model.user import User, UserRole, Permission
+from model.student import Teacher, StudentClass
 from core.oauth.authenticate import get_current_user
 
 
@@ -24,7 +26,10 @@ mysql_session_depend = Annotated[AsyncSession, Depends(get_async_session)]
 async def get_user_from_path_id(
     user_id: int, session: mysql_session_depend
 ) -> Optional[User]:
-    user = await session.get(User, user_id)
+    results = await session.exec(
+        select(User).where(User.id == user_id).where(User.is_super_admin == False)  # noqa E712
+    )
+    user = results.first()
     return user
 
 
@@ -53,3 +58,27 @@ permission_from_path_id_depend = Annotated[
 ]
 
 get_current_user_depend = Depends(get_current_user)
+
+
+async def get_teacher_from_path_id(
+    teacher_id: int, session: mysql_session_depend
+) -> Optional[Teacher]:
+    teacher = await session.get(Teacher, teacher_id)
+    return teacher
+
+
+teacher_from_path_id_depend = Annotated[
+    Optional[Teacher], Depends(get_teacher_from_path_id)
+]
+
+
+async def get_class_from_path_id(
+    class_id: int, session: mysql_session_depend
+) -> Optional[StudentClass]:
+    student_class = await session.get(StudentClass, class_id)
+    return student_class
+
+
+class_from_path_id_depend = Annotated[
+    Optional[StudentClass], Depends(get_class_from_path_id)
+]

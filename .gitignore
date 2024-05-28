@@ -5,5 +5,8 @@ __pycache__
 htmlcov
 .pytest_cache
 
+#plug-in
+*.http
+
 # macOS
 .DS_Store
