@@ -16,9 +16,10 @@ from sqlmodel import (
 )
 
 from core.sqlmodel import SQLModel
-from common.const import TeacherPost
+from common.const import TeacherPost as ConstTeacherPost
 from dependencies.mysql import MysqlClient
 from core.async_validator import async_validator
+from model.user import User
 
 mysql_client: MysqlClient = inject.instance(MysqlClient)
 
@@ -36,10 +37,14 @@ class TeacherClassRelationship(SQLModel, table=True):
             INTEGER(unsigned=True), ForeignKey("class.id"), primary_key=True
         )
     )
-    teacher_post: int = Field(sa_column=Column(Enum(TeacherPost), nullable=False))
+    teacher_post: int = Field(sa_column=Column(Enum(ConstTeacherPost), nullable=False))
 
-    student_class: "StudentClass" = Relationship(back_populates="teacher_links")
-    teacher: "Teacher" = Relationship(back_populates="class_links")
+    student_class: "StudentClass" = Relationship(
+        back_populates="teacher_links", sa_relationship_kwargs={"lazy": "selectin"}
+    )
+    teacher: "Teacher" = Relationship(
+        back_populates="class_links", sa_relationship_kwargs={"lazy": "selectin"}
+    )
 
 
 # Teacher
@@ -59,25 +64,44 @@ class Teacher(TeacherBase, table=True):
     user_id: int = Field(
         sa_column=Column(INTEGER(unsigned=True), ForeignKey("user.id"), nullable=False)
     )
+    user: Optional[User] = Relationship(sa_relationship_kwargs={"lazy": "selectin"})
 
-    class_links: List[TeacherClassRelationship] = Relationship(back_populates="teacher")
+    class_links: List[TeacherClassRelationship] = Relationship(
+        back_populates="teacher", sa_relationship_kwargs={"lazy": "selectin"}
+    )
 
     def __repr__(self):
         return f"TeacherModel(id={self.id!r}, name={self.name!r})"
 
 
+class TeacherPublic(TeacherBase):
+    id: int
+    status: bool
+    class_names: List[str]
+
+    @classmethod
+    def serialize(cls, teacher: Teacher):
+        return cls(
+            id=teacher.id,
+            name=teacher.user.name,
+            status=teacher.user.status,
+            class_names=[link.student_class.name for link in teacher.class_links],
+        )
+
+
 class TeacherDetail(TeacherBase):
     id: int
+    status: bool
     class_post_map_list: List[Dict[str, str]] = Field(
         sa_column=Column(JSON), default=[]
     )  # [{"class_name": "", "post_name": ""}]
 
     @classmethod
-    async def serialize(cls, teacher: Teacher):
+    def serialize(cls, teacher: Teacher):
         class_post_map_list = [
             {
                 "class_name": link.student_class.name,
-                "post_name": TeacherPost(link.teacher_post).name,
+                "post_name": ConstTeacherPost(link.teacher_post).name,
             }
             for link in teacher.class_links
         ]
@@ -86,6 +110,7 @@ class TeacherDetail(TeacherBase):
             id=teacher.id,
             name=teacher.name,
             class_post_map_list=class_post_map_list,
+            status=teacher.user.status,
         )
 
 
@@ -104,7 +129,7 @@ class ModifyTeacher(SQLModel):
                 raise ValueError(f"Duplicate class_id {class_post_map['class_id']}")
             if "post_id" not in class_post_map:
                 raise ValueError("Missing post_id")
-            if class_post_map["post_id"] not in TeacherPost.values():
+            if class_post_map["post_id"] not in ConstTeacherPost.values():
                 raise ValueError(f"Invalid post {class_post_map['post_id']}")
             class_ids.add(class_post_map["class_id"])
         return class_post_map_list
@@ -148,7 +173,7 @@ class StudentClass(StudentClassBase, table=True):
 
     # students: list["Student"] = Relationship(back_populates="class")
     teacher_links: list[TeacherClassRelationship] = Relationship(
-        back_populates="student_class"
+        back_populates="student_class", sa_relationship_kwargs={"lazy": "selectin"}
     )
 
     def __repr__(self):
@@ -189,3 +214,8 @@ class StudentClassPublic(StudentClassBase):
 #     user_id: int = Field(
 #         sa_column=Column(INTEGER(unsigned=True), ForeignKey("user.id"), nullable=False)
 #     )
+
+
+class TeacherPost(SQLModel):
+    id: int
+    name: str

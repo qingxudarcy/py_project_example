@@ -46,37 +46,32 @@ async def init_data():
         name="admin_permission",
         api_path_regular=[".*"],
         api_http_method="all",
-        status=True,
     )
 
     teacher_list_permission = Permission(
         name="teacher_list_permission",
         api_path_regular="^/api/v1/teacher$",
         api_http_method="get",
-        status=True,
     )
     teacher_detail_permission = Permission(
         name="teacher_detail_permission",
         api_path_regular="^/api/v1/teacher/{id}$",
         api_http_method="get",
-        status=True,
     )
 
     class_list_permission = Permission(
         name="class_list_permission",
         api_path_regular="^/api/v1/class$",
         api_http_method="get",
-        status=True,
     )
     class_detail_permission = Permission(
         name="class_detail_permission",
         api_path_regular="^/api/v1/class/{id}$",
         api_http_method="get",
-        status=True,
     )
 
     admin_role = UserRole(
-        name=UserRoleConst.Admin.value, status=True, permissions=[admin_permission]
+        name=UserRoleConst.Admin.value, permissions=[admin_permission]
     )
     super_admin_user = User(
         name="super_admin",
@@ -97,16 +92,6 @@ async def init_data():
 
     teacher_role = UserRole(
         name=UserRoleConst.Teacher.value,
-        status=True,
-        permissions=[
-            teacher_detail_permission,
-            class_list_permission,
-            class_detail_permission,
-        ],
-    )
-    head_teacher_role = UserRole(
-        name=UserRoleConst.HeadTeacher.value,
-        status=True,
         permissions=[
             teacher_list_permission,
             teacher_detail_permission,
@@ -125,7 +110,6 @@ async def init_data():
         session.add(teacher_detail_permission)
 
         session.add(teacher_role)
-        session.add(head_teacher_role)
         await session.commit()
 
 

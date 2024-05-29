@@ -3,6 +3,7 @@ from typing_extensions import Annotated
 
 from sqlmodel import select, col, or_
 from fastapi import APIRouter, Query, HTTPException
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from core.depend.api import page_depend
 from core.depend.db import (
@@ -16,6 +17,8 @@ from core.depend.validator.user_validator import (
 )
 from model.user import User, UserPublic
 from core.oauth.authenticate import get_password_hash
+from common.const import UserRole
+from model.student import Teacher
 
 
 user_api_router: APIRouter = APIRouter(
@@ -69,6 +72,9 @@ async def create_user(
     await session.commit()
     await session.refresh(new_user)
 
+    if new_user.role_name == UserRole.Teacher.value:
+        await create_teacher(new_user, session)
+
     return UserPublic.serialize(new_user)
 
 
@@ -94,3 +100,15 @@ async def update_user(
     await session.commit()
 
     return UserPublic.serialize(user)
+
+
+async def create_teacher(user: User, session: AsyncSession) -> None:
+    new_teacher = Teacher(
+        name=user.name,
+        user_id=user.id,
+    )
+
+    session.add(new_teacher)
+    await session.commit()
+
+    return new_teacher

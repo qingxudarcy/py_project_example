@@ -12,6 +12,10 @@ class Enum(BaseEnum):
     def names(cls):
         return cls._member_names_
 
+    @classmethod
+    def members_map(cls):
+        return cls._member_map_
+
 
 class Course(str, Enum):
     Math = "Math"
@@ -28,6 +32,5 @@ class TeacherPost(Enum):
 
 class UserRole(Enum):
     Admin = "Admin"
-    HeadTeacher = "HeadTeacher"
     Teacher = "Teacher"
     Student = "Student"

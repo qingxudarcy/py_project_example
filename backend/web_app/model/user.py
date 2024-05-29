@@ -77,6 +77,10 @@ class User(UserBase, table=True):
     def __repr__(self):
         return f"UserModel(id={self.id!r}, name={self.name!r}, email={self.email!r}, status={self.status!r})"
 
+    @property
+    def role_name(self):
+        return self.role.name
+
 
 class UserPublic(SQLModel):
     id: int
@@ -118,7 +122,6 @@ class UserRoleBase(SQLModel):
     name: str = Field(
         max_length=50, sa_column=Column(String(length=50), nullable=False, unique=True)
     )
-    status: bool
 
 
 class UserRole(UserRoleBase, table=True):
@@ -136,9 +139,7 @@ class UserRole(UserRoleBase, table=True):
     )
 
     def __repr__(self) -> str:
-        return (
-            f"UserRoleModel(id={self.id!r}, name={self.name!r}, status={self.status!r})"
-        )
+        return f"UserRoleModel(id={self.id!r}, name={self.name!r})"
 
 
 class PermissionBase(SQLModel):
@@ -151,7 +152,6 @@ class PermissionBase(SQLModel):
     api_http_method: str = Field(
         max_length=20, sa_column=Column(String(length=20), nullable=False)
     )
-    status: bool = Field(nullable=False)
 
     class Config:
         arbitrary_types_allowed = True
@@ -187,4 +187,4 @@ class Permission(PermissionBase, table=True):
     )
 
     def __repr__(self) -> str:
-        return f"PermissionModel(id={self.id!r}, name={self.name!r}, status={self.status!r})"
+        return f"PermissionModel(id={self.id!r}, name={self.name!r})"
